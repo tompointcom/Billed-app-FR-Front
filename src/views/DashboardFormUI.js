@@ -23,7 +23,7 @@ export const modal = () => (`
 
 export default (bill) => {
 
-  return (`
+    return (`
     <div class="container dashboard-form" data-testid="dashboard-form">
       <div class="row">
         <div class="col-sm" id="dashboard-form-col1">
@@ -70,7 +70,7 @@ export default (bill) => {
             <div class='input-field input-flex file-flex'>
             <span id="file-name-admin">${bill.fileName}</span>
             <div class='icons-container'>
-              <span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}"> ${eyeWhite} </span>
+              ${bill.fileName !== "null" ? `<span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}"> ${eyeWhite} </span>` : ""}
             </div>
           </div>
         </div>
