@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { screen, waitFor } from "@testing-library/dom"
+import {fireEvent, screen, waitFor} from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
 import { ROUTES_PATH } from "../constants/routes.js"
@@ -210,43 +210,35 @@ describe("Given I am a user connected as employee", () => {
                 router();
             });
 
-            test("affiche 'Erreur 404' lorsque le serveur retourne 404", async () => {
+            test("fetches bills from an API and fails with 404 message error", async () => {
 
-                const storeMock = {
-                    bills: jest.fn(() => ({
-                        list: jest.fn(() => Promise.reject(new Error("Erreur 404"))) // Simule l'erreur 404
-                    }))
-                };
-
-
-                const billsInstance = new Bills({
-                    document: document,
-                    onNavigate: jest.fn(),
-                    store: storeMock,
-                    localStorage: window.localStorage
-                });
-
-
-                await expect(billsInstance.getBills()).rejects.toThrow("Erreur 404");
+                mockStore.bills.mockImplementationOnce(() => {
+                    return {
+                        list : () =>  {
+                            return Promise.reject(new Error("Erreur 404"))
+                        }
+                    }})
+                window.onNavigate(ROUTES_PATH.Bills)
+                await new Promise(process.nextTick);
+                const message = await screen.getByText(/Erreur 404/)
+                expect(message).toBeTruthy()
             });
-
-
-
-
-
             test("fetches messages from an API and fails with 500 message error", async () => {
-                fetchMock.mockRejectOnce(new Error("Erreur 500"));
+                mockStore.bills.mockImplementationOnce(() => {
+                    return {
+                        list : () =>  {
+                            return Promise.reject(new Error("Erreur 500"))
+                        }
+                    }})
 
-                window.onNavigate(ROUTES_PATH.Bills);
-
-                await waitFor(() => {
-                    const errorMessage = screen.getByTestId("error-message");
-                    expect(errorMessage).toBeTruthy();
-                    expect(errorMessage.textContent).toContain("Erreur 500");
+                window.onNavigate(ROUTES_PATH.Bills)
+                await new Promise(process.nextTick);
+                const message = await screen.getByText(/Erreur 500/)
+                expect(message).toBeTruthy()
                 });
             });
 
         });
-    });
 });
+
 

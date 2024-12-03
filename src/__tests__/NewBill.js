@@ -19,26 +19,24 @@ describe("Given I am connected as an employee", () => {
       expect(formNewBill).toBeTruthy()
     })
     test("Then form submit and file change events should be attached", () => {
-      document.body.innerHTML = `
-        <form data-testid="form-new-bill">
-          <input data-testid="file" type="file" />
-        </form>
-      `
+      document.body.innerHTML = NewBillUI();
 
-      const onNavigate = jest.fn()
-      const newBill = new NewBill({
-        document: document,
-        onNavigate: onNavigate,
+      const formNewBill = screen.getByTestId("form-new-bill");
+      const fileInput = screen.getByTestId("file");
+
+      const addEventListenerSpy = jest.spyOn(formNewBill, "addEventListener");
+      const addEventListenerSpyFile = jest.spyOn(fileInput, "addEventListener");
+
+      new NewBill({
+        document,
+        onNavigate: jest.fn(),
         store: null,
-        localStorage: localStorageMock
-      })
+        localStorage: window.localStorage,
+      });
 
-      const formNewBill = screen.getByTestId('form-new-bill')
-      const fileInput = screen.getByTestId('file')
-
-      expect(formNewBill.addEventListener).toHaveBeenCalledWith("submit", newBill.handleSubmit)
-      expect(fileInput.addEventListener).toHaveBeenCalledWith("change", newBill.handleChangeFile)
-    })
+      expect(addEventListenerSpy).toHaveBeenCalledWith("submit", expect.any(Function));
+      expect(addEventListenerSpyFile).toHaveBeenCalledWith("change", expect.any(Function));
+    });
   })
 
 })
