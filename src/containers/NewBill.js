@@ -8,47 +8,46 @@ export default class NewBill {
     this.store = store
     const formNewBill = this.document.querySelector(`form[data-testid="form-new-bill"]`)
     formNewBill.addEventListener("submit", this.handleSubmit)
-    const file = this.document.querySelector(`input[data-testid="file"]`)
-    file.addEventListener("change", this.handleChangeFile)
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`);
+    fileInput.addEventListener('change', this.handleChangeFile);
     this.fileUrl = null
     this.fileName = null
     this.billId = null
     new Logout({ document, localStorage, onNavigate })
   }
-  handleChangeFile = e => {
-    e.preventDefault()
-    const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
-    const filePath = e.target.value.split(/\\/g)
-    const fileName = filePath[filePath.length-1]
-    const fileExtension = fileName.split('.').pop().toLowerCase()
+  handleChangeFile = async (e) => {
+    e.preventDefault();
+    const file = e.target.files[0];
+    const fileName = e.target.value.split(/\\/g).pop();
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png'];
 
-    if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
-      const formData = new FormData()
-      const email = JSON.parse(localStorage.getItem("user")).email
-      formData.append('file', file)
-      formData.append('email', email)
+    if (!allowedExtensions.includes(fileExtension)) {
+      window.alert('Seuls les fichiers avec les extensions jpg, jpeg ou png sont acceptés.');
+      e.target.value = ''; // Clear the input
+      return;
+    }
 
-      this.store
-          .bills()
-          .create({
-            data: formData,
-            headers: {
-              noContentType: true
-            }
-          })
-          .then(({fileUrl, key}) => {
-            console.log('fileUrl:', fileUrl)
-            if (fileUrl) {
-              this.billId = key
-              this.fileUrl = fileUrl
-              this.fileName = fileName
-            } else {
-              console.error('fileUrl is null or undefined')
-            }
-          }).catch(error => console.error(error))
-    } else {
-      alert('Seuls les fichiers avec les extensions jpg, jpeg ou png sont acceptés.')
-      e.target.value = ''
+    const formData = new FormData();
+    const email = JSON.parse(localStorage.getItem("user")).email;
+
+    formData.append('file', file);
+    formData.append('email', email);
+
+    try {
+      const response = await this.store
+        .bills()
+        .create({
+          data: formData,
+          headers: {
+            noContentType: true,
+          },
+        });
+      this.billId = response.key;
+      this.fileUrl = response.fileUrl;
+      this.fileName = fileName;
+    } catch (error) {
+      console.error(error);
     }
   }
   handleSubmit = e => {
