@@ -7,59 +7,64 @@ export default class NewBill {
     this.onNavigate = onNavigate;
     this.store = store;
     this.localStorage = localStorage;
+
+    // Bind methods
+    this.handleChangeFile = this.handleChangeFile.bind(this);
+
     const formNewBill = this.document.querySelector(`form[data-testid="form-new-bill"]`)
     formNewBill.addEventListener("submit", this.handleSubmit.bind(this)) // Bind this
     const fileInput = this.document.querySelector(`input[data-testid="file"]`);
-    fileInput.addEventListener('change', this.handleChangeFile.bind(this)); // Bind this
+    fileInput.addEventListener('change', this.handleChangeFile);
     this.fileUrl = null
     this.fileName = null
     this.billId = null
     new Logout({ document, localStorage, onNavigate })
   }
+
   handleChangeFile = async (e) => {
     e.preventDefault();
     const file = e.target.files[0];
-    const fileName = e.target.value.split(/\\/g).pop();
+    const fileName = file.name;
     const fileExtension = fileName.split('.').pop().toLowerCase();
     const allowedExtensions = ['jpg', 'jpeg', 'png'];
 
-    if (!allowedExtensions.includes(fileExtension)) {
-      window.alert('Seuls les fichiers avec les extensions jpg, jpeg ou png sont acceptés.');
-      e.target.value = ''; // Clear the input
-      return;
-    }
+    if (allowedExtensions.includes(fileExtension)) {
+      try {
+        const formData = new FormData();
+        const email = JSON.parse(localStorage.getItem('user')).email;
+        formData.append('file', file);
+        formData.append('email', email);
 
-    const formData = new FormData();
-    const email = JSON.parse(localStorage.getItem("user")).email;
+        const response = await this.store
+          .bills()
+          .create({ data: formData, headers: { noContentType: true } });
 
-    formData.append('file', file);
-    formData.append('email', email);
-
-    try {
-      const response = await this.store
-        .bills()
-        .create({
-          data: formData,
-          headers: {
-            noContentType: true,
-          },
-        });
-      this.billId = response.key;
-      this.fileUrl = response.fileUrl;
-      this.fileName = fileName;
-    } catch (error) {
-      console.error(error);
+        this.billId = response.key;
+        this.fileUrl = response.fileUrl;
+        this.fileName = response.fileName;
+      } catch (error) {
+        console.error(error);
+        this.billId = null;
+        this.fileUrl = null;
+        this.fileName = null;
+      }
+    } else {
+      e.target.value = '';
+      window.alert(
+        'Seuls les fichiers avec les extensions jpg, jpeg ou png sont acceptés.'
+      );
     }
   }
+
   handleSubmit = (e) => {
     e.preventDefault();
     try {
       const userStr = this.localStorage.getItem("user");
-      console.log("User string:", userStr); // Should display '{"email":"employee@test.com"}'
+      console.log("User string:", userStr);
       const user = JSON.parse(userStr);
-      console.log("Parsed user:", user); // Should display { email: 'employee@test.com' }
+      console.log("Parsed user:", user); 
       const email = user.email;
-      console.log("Email récupéré :", email); // Should display 'employee@test.com'
+      console.log("Email récupéré :", email); 
 
       const bill = {
         email,
