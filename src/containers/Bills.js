@@ -38,20 +38,28 @@ export default class {
               try {
                 return {
                   ...doc,
-                  date: formatDate(doc.date),
+                  date: new Date(doc.date), 
                   status: formatStatus(doc.status)
                 };
               } catch (e) {
                 console.log(e, 'for', doc);
                 return {
                   ...doc,
-                  date: doc.date,
+                  date: new Date(doc.date), 
                   status: formatStatus(doc.status)
                 };
               }
             });
-            console.log("Bills loaded:", bills);
-            return bills;
+
+            bills.sort((a, b) => b.date - a.date);
+
+            const formattedBills = bills.map(bill => ({
+              ...bill,
+              date: formatDate(bill.date)
+            }));
+
+            console.log("Bills loaded:", formattedBills);
+            return formattedBills;
           })
 
     }
